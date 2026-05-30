@@ -233,7 +233,11 @@ const $ = (selector) => document.querySelector(selector);
 
 const el = {
   currentTypeGrid: $("#currentTypeGrid"),
+  currentTypeSelect: $("#currentTypeSelect"),
   targetGrid: $("#targetGrid"),
+  targetPrev: $("#targetPrev"),
+  targetNext: $("#targetNext"),
+  targetCounter: $("#targetCounter"),
   startBtn: $("#startBtn"),
   menuBtn: $("#menuBtn"),
   chapterName: $("#chapterName"),
@@ -298,41 +302,42 @@ function bindEvents() {
 }
 
 function renderMenu() {
-  el.currentTypeGrid.innerHTML = mbtiCast
-    .map(
-      (item, index) => `
-        <button class="type-chip ${index === state.currentIndex ? "is-selected" : ""}" data-current="${index}" type="button">
-          ${item.mbti}
-        </button>
-      `,
-    )
-    .join("");
+  if (el.currentTypeSelect) {
+    el.currentTypeSelect.innerHTML = mbtiCast
+      .map((item, index) => `<option value="${index}">${item.mbti} · ${item.character}</option>`)
+      .join("");
+    el.currentTypeSelect.value = String(state.currentIndex);
+    el.currentTypeSelect.onchange = () => {
+      state.currentIndex = Number(el.currentTypeSelect.value);
+    };
+  }
 
-  el.targetGrid.innerHTML = mbtiCast
-    .map(
-      (item, index) => `
-        <button class="target-card ${index === state.targetIndex ? "is-selected" : ""}" data-target="${index}" type="button">
-          <span class="avatar atlas-avatar" style="${atlasStyle(item.portrait)}"></span>
-          <strong>${item.character} · ${item.mbti}</strong>
-          <span>${item.title}</span>
-        </button>
-      `,
-    )
-    .join("");
+  const target = mbtiCast[state.targetIndex];
+  el.targetCounter.textContent = `${state.targetIndex + 1} / ${mbtiCast.length}`;
+  el.targetGrid.innerHTML = `
+    <article class="target-card is-selected menu-hero-card">
+      <span class="avatar atlas-avatar" style="${atlasStyle(target.portrait)}"></span>
+      <div class="target-card-copy">
+        <strong>${target.character} · <span class="latin-token">${target.mbti}</span></strong>
+        <span>${target.title}</span>
+        <p>${renderMenuTargetBrief(target)}</p>
+      </div>
+    </article>
+  `;
 
-  el.currentTypeGrid.querySelectorAll("button").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.currentIndex = Number(button.dataset.current);
-      renderMenu();
-    });
-  });
+  el.targetPrev.onclick = () => {
+    state.targetIndex = (state.targetIndex - 1 + mbtiCast.length) % mbtiCast.length;
+    renderMenu();
+  };
+  el.targetNext.onclick = () => {
+    state.targetIndex = (state.targetIndex + 1) % mbtiCast.length;
+    renderMenu();
+  };
+}
 
-  el.targetGrid.querySelectorAll("button").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.targetIndex = Number(button.dataset.target);
-      renderMenu();
-    });
-  });
+function renderMenuTargetBrief(target) {
+  const [dominant, auxiliary] = target.stack;
+  return `主导 ${traits[dominant]}，辅助 ${traits[auxiliary]}。${functionBrief[dominant]}。`;
 }
 
 function startGame() {
@@ -524,8 +529,22 @@ function enhanceRounds(rounds) {
 function renderGoal() {
   const target = mbtiCast[state.targetIndex];
   setAtlas(el.goalAvatar, target.portrait);
-  el.goalName.textContent = `${target.character} · ${target.mbti}`;
-  el.goalTrait.textContent = target.trait;
+  el.goalName.innerHTML = `${target.character} · <span class="latin-token">${target.mbti}</span>`;
+  el.goalTrait.innerHTML = renderTargetBrief(target);
+  const goalCard = document.querySelector("#goalCard");
+  if (goalCard) goalCard.open = false;
+}
+
+function renderTargetBrief(target) {
+  const [dominant, auxiliary] = target.stack;
+  return `
+    <span class="target-function">
+      <span class="latin-token">${target.mbti}</span>：主导 ${traits[dominant]}，辅助 ${traits[auxiliary]}。
+    </span>
+    <span class="target-function">
+      先${functionBrief[dominant]}，再${functionBrief[auxiliary]}。
+    </span>
+  `;
 }
 
 function renderRound() {
@@ -628,15 +647,15 @@ function renderChoiceFeedback(round, choice, feedback) {
 
 function renderAnalysisPanel(feedback) {
   el.analysisPanel.hidden = false;
-  el.analysisVerdict.textContent = feedback.verdict;
-  el.analysisScore.textContent = `契合 ${feedback.alignment}% · 差 ${feedback.gap}%`;
+  el.analysisVerdict.textContent = "人格拆解";
+  el.analysisScore.textContent = `契合 ${feedback.alignment}%`;
   el.analysisBody.innerHTML = `
     <div class="analysis-meter" aria-label="目标人格契合度 ${feedback.alignment}%">
       <i style="width:${feedback.alignment}%"></i>
     </div>
+    <p><b>你的反应路径</b>${feedback.yourChoice}</p>
     <p><b>目标人格会先看</b>${feedback.targetThinking}</p>
     <p><b>如果按 TA 的思路</b>${feedback.targetChoice}</p>
-    <p><b>你这次的路径</b>${feedback.yourChoice}</p>
     <p><b>名场面推理</b>${feedback.sceneReason}</p>
     <small>${feedback.note}</small>
   `;
@@ -722,8 +741,8 @@ function renderReport(data = getReportData()) {
     .slice(0, 3);
 
   setAtlas(el.reportAvatar, target.portrait);
-  el.reportTitle.textContent = `${current.mbti} 的你，距离 ${target.character} 还有 ${100 - score}%`;
-  el.reportSubtitle.textContent = `目标人格：${target.character} · ${target.mbti} · ${target.title}`;
+  el.reportTitle.innerHTML = `<span class="latin-token">${current.mbti}</span> 的你，距离 ${target.character} 还有 ${100 - score}%`;
+  el.reportSubtitle.innerHTML = `目标人格：${target.character} · <span class="latin-token">${target.mbti}</span> · ${target.title}`;
   el.compatScore.textContent = `${score}%`;
   document.documentElement.style.setProperty("--score-angle", `${Math.round(score * 3.6)}deg`);
 
@@ -928,22 +947,7 @@ function applyDelta(delta) {
 }
 
 function renderStats() {
-  const target = mbtiCast[state.targetIndex];
-  const score = calculateScore();
-  el.statStrip.innerHTML = `
-    <div class="stat">
-      <div class="stat-label"><span>目标</span><span>${target.mbti}</span></div>
-      <div class="stat-track"><i style="width:100%"></i></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label"><span>主导</span><span>${target.stack[0]}</span></div>
-      <div class="stat-track"><i style="width:72%"></i></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label"><span>契合</span><span>${score}%</span></div>
-      <div class="stat-track"><i style="width:${score}%"></i></div>
-    </div>
-  `;
+  el.statStrip.innerHTML = "";
 }
 
 function renderCast(cast = {}, focus) {

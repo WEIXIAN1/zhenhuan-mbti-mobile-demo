@@ -26,26 +26,32 @@
 
         <div class="menu-layout">
           <section class="intro-board">
-            <p class="seal">竖屏名场面训练</p>
-            <h1>甄嬛 MBTI 改命局</h1>
+            <p class="seal">宫斗人格试炼</p>
+            <h1><span>甄嬛 <b class="latin-token">MBTI</b></span><span>改命局</span></h1>
             <p class="menu-copy">
-              选“现在的你”和“想成为的宫斗人格”。每一幕结束后，用 MBTI / 荣格功能栈解释：目标人格为什么更可能那样选。
+              选“现在的你”和“想成为的宫斗人格”。十个名场面里，每一次选择都会推演后果，并拆解目标人格为什么会那样判断。
             </p>
-            <button class="start-btn" id="startBtn" type="button">进入十轮名场面</button>
+            <button class="start-btn" id="startBtn" type="button">入局试炼</button>
           </section>
 
           <section class="selector-board">
             <div class="section-title">
               <span>现在的你</span>
-              <small>初始 MBTI</small>
+              <small>选择初始 MBTI</small>
             </div>
-            <div class="type-chip-grid" id="currentTypeGrid"></div>
+            <label class="type-select-wrap">
+              <select id="currentTypeSelect" aria-label="选择现在的 MBTI"></select>
+            </label>
 
             <div class="section-title target-title">
               <span>想成为谁</span>
-              <small>16 型人物</small>
+              <small id="targetCounter">1 / 16</small>
             </div>
-            <div class="target-grid" id="targetGrid"></div>
+            <div class="target-carousel">
+              <button class="carousel-btn" id="targetPrev" type="button" aria-label="上一个目标人物">‹</button>
+              <div class="target-grid" id="targetGrid"></div>
+              <button class="carousel-btn" id="targetNext" type="button" aria-label="下一个目标人物">›</button>
+            </div>
           </section>
         </div>
       </section>
@@ -63,22 +69,16 @@
           <div class="stat-strip" id="statStrip"></div>
         </header>
 
-        <aside class="goal-card parchment-card">
-          <div class="avatar atlas-avatar" id="goalAvatar" aria-hidden="true"></div>
-          <div>
-            <span>目标人格</span>
-            <strong id="goalName"></strong>
-            <p id="goalTrait"></p>
-          </div>
-        </aside>
-
-        <aside class="analysis-panel parchment-card" id="analysisPanel" hidden>
-          <div class="analysis-head">
-            <span id="analysisVerdict">分支解析</span>
-            <strong id="analysisScore"></strong>
-          </div>
-          <div class="analysis-body" id="analysisBody"></div>
-        </aside>
+        <details class="goal-card parchment-card" id="goalCard">
+          <summary>
+            <div class="avatar atlas-avatar" id="goalAvatar" aria-hidden="true"></div>
+            <div>
+              <span>目标人格</span>
+              <strong id="goalName"></strong>
+            </div>
+          </summary>
+          <p id="goalTrait"></p>
+        </details>
 
         <div class="palace-plaque" id="palacePlaque">储秀宫</div>
 
@@ -100,6 +100,13 @@
             </div>
           </div>
           <p class="dialogue-text" id="dialogueText"></p>
+          <aside class="analysis-panel parchment-card" id="analysisPanel" hidden>
+            <div class="analysis-head">
+              <span id="analysisVerdict">人格拆解</span>
+              <strong id="analysisScore"></strong>
+            </div>
+            <div class="analysis-body" id="analysisBody"></div>
+          </aside>
           <div class="choice-panel" id="choicePanel" hidden></div>
           <button class="next-btn" id="nextBtn" type="button">继续</button>
         </section>
