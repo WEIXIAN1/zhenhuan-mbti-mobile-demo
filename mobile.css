@@ -84,14 +84,14 @@ p {
   z-index: -3;
   background:
     linear-gradient(180deg, rgba(7, 4, 4, 0.32), rgba(7, 4, 4, 0.82)),
-    url("./assets/zhenhuan-bg.png") center / cover no-repeat;
+    url("./assets/zhenhuan-bg.webp") center / cover no-repeat;
   transform: scale(1.02);
 }
 
 .play-screen .scene-bg {
   background:
     linear-gradient(180deg, rgba(4, 3, 3, 0.02), rgba(4, 3, 3, 0.34) 58%, rgba(4, 3, 3, 0.78)),
-    url("./assets/scene-atlas.png") var(--scene-x, 0%) var(--scene-y, 0%) / 500% 200% no-repeat;
+    url("./assets/scene-atlas.webp") var(--scene-x, 0%) var(--scene-y, 0%) / 500% 200% no-repeat;
 }
 
 .menu-shade,
@@ -165,6 +165,11 @@ p {
   overflow: hidden;
 }
 
+.selector-board {
+  z-index: 8;
+  overflow: visible;
+}
+
 .seal {
   display: inline-flex;
   margin: 0 0 10px;
@@ -232,39 +237,154 @@ h1 span {
   gap: 8px;
 }
 
-.type-select-wrap {
-  display: block;
+.type-picker {
   position: relative;
+  z-index: 30;
 }
 
-.type-select-wrap::after {
-  content: "⌄";
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-54%);
-  color: var(--gold-strong);
-  font-size: 1.2rem;
-  pointer-events: none;
-}
-
-#currentTypeSelect {
+.type-picker-button {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  min-height: 52px;
-  padding: 0 42px 0 16px;
+  min-height: 54px;
+  padding: 10px 42px 10px 15px;
   border: 1px solid rgba(255, 221, 135, 0.34);
   border-radius: 8px;
   color: var(--ink);
   background:
+    linear-gradient(90deg, rgba(255, 221, 135, 0.08) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 221, 135, 0.06) 1px, transparent 1px),
     linear-gradient(135deg, rgba(83, 18, 28, 0.92), rgba(25, 12, 12, 0.92)),
     rgba(255, 245, 223, 0.08);
+  background-size: 26px 26px, 26px 26px, auto, auto;
+  font-family: var(--ui-font);
+  text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(255, 245, 223, 0.05);
+}
+
+.type-picker-button::after {
+  content: "⌄";
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-55%);
+  color: var(--gold-strong);
   font-family: var(--latin-font);
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   font-weight: 900;
-  appearance: none;
+}
+
+.type-picker.is-open .type-picker-button::after {
+  content: "⌃";
+}
+
+.type-picker-button > span {
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--latin-font);
+  font-size: 1.12rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.type-picker-button > small {
+  color: rgba(255, 221, 135, 0.76);
+  font-family: var(--text-font);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.type-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  display: grid;
+  gap: 7px;
+  max-height: min(58dvh, 420px);
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid rgba(255, 221, 135, 0.38);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(255, 221, 135, 0.08) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 221, 135, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(69, 16, 24, 0.98), rgba(17, 8, 8, 0.98));
+  background-size: 28px 28px, 28px 28px, auto;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.62);
+}
+
+.type-menu[hidden] {
+  display: none;
+}
+
+.type-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 43px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 221, 135, 0.22);
+  border-radius: 7px;
+  color: var(--ink);
+  background: rgba(255, 245, 223, 0.07);
+  text-align: left;
+}
+
+.type-option span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--latin-font);
+  font-size: 0.98rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.type-option small {
+  color: rgba(255, 245, 223, 0.62);
+  font-family: var(--text-font);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.type-option.is-selected {
+  border-color: rgba(255, 221, 135, 0.76);
+  color: #25180f;
+  background:
+    linear-gradient(135deg, rgba(255, 221, 135, 0.92), rgba(196, 139, 68, 0.9));
+}
+
+.type-option.is-selected span,
+.type-option.is-selected small {
+  color: #25180f;
+}
+
+.type-option:focus-visible,
+.type-option:hover {
+  border-color: var(--gold-strong);
+  background:
+    linear-gradient(135deg, rgba(124, 27, 39, 0.72), rgba(83, 18, 28, 0.86)),
+    rgba(255, 245, 223, 0.08);
+  outline: none;
+}
+
+.type-option.is-selected:focus-visible,
+.type-option.is-selected:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 221, 135, 0.96), rgba(196, 139, 68, 0.92));
 }
 
 .type-chip,
+.type-picker-button,
+.type-option,
 .target-card,
 .choice-btn,
 .start-btn,
@@ -333,7 +453,7 @@ h1 span {
   overflow: hidden;
   border: 1px solid rgba(255, 221, 135, 0.3);
   border-radius: 8px;
-  background-image: url("./assets/mbti-atlas.png");
+  background-image: url("./assets/mbti-atlas.webp");
   background-repeat: no-repeat;
   background-size: 400% 400%;
   box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.32);

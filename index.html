@@ -14,8 +14,10 @@
       content="竖屏版：选现在的你和想成为的宫斗人格，十轮名场面后生成 MBTI 契合度雷达报告。"
     />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="./assets/zhenhuan-bg.png" />
+    <meta property="og:image" content="./assets/share-thumb.jpg" />
     <meta name="theme-color" content="#461018" />
+    <link rel="preload" as="image" href="./assets/zhenhuan-bg.webp" />
+    <link rel="preload" as="image" href="./assets/mbti-atlas.webp" />
     <link rel="stylesheet" href="./mobile.css" />
   </head>
   <body>
@@ -39,9 +41,19 @@
               <span>现在的你</span>
               <small>选择初始 MBTI</small>
             </div>
-            <label class="type-select-wrap">
-              <select id="currentTypeSelect" aria-label="选择现在的 MBTI"></select>
-            </label>
+            <div class="type-picker" id="typePicker">
+              <button
+                class="type-picker-button"
+                id="currentTypeButton"
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+              >
+                <span id="currentTypeLabel"></span>
+                <small>点此更换现在的你</small>
+              </button>
+              <div class="type-menu" id="currentTypeMenu" role="listbox" hidden></div>
+            </div>
 
             <div class="section-title target-title">
               <span>想成为谁</span>
@@ -83,10 +95,10 @@
         <div class="palace-plaque" id="palacePlaque">储秀宫</div>
 
         <div class="sprite-stage" id="spriteStage">
-          <img class="sprite" id="sprite-zhenhuan" src="./assets/sprite-zhenhuan.png" alt="甄嬛立绘" />
-          <img class="sprite" id="sprite-anlingrong" src="./assets/sprite-anlingrong.png" alt="安陵容立绘" />
-          <img class="sprite" id="sprite-huafei" src="./assets/sprite-huafei.png" alt="华妃立绘" />
-          <img class="sprite" id="sprite-emperor" src="./assets/sprite-emperor.png" alt="皇上立绘" />
+          <img class="sprite" id="sprite-zhenhuan" src="./assets/sprite-zhenhuan.webp" alt="甄嬛立绘" decoding="async" />
+          <img class="sprite" id="sprite-anlingrong" src="./assets/sprite-anlingrong.webp" alt="安陵容立绘" decoding="async" />
+          <img class="sprite" id="sprite-huafei" src="./assets/sprite-huafei.webp" alt="华妃立绘" decoding="async" />
+          <img class="sprite" id="sprite-emperor" src="./assets/sprite-emperor.webp" alt="皇上立绘" decoding="async" />
         </div>
 
         <div class="feedback-toast" id="feedbackToast" aria-live="polite"></div>

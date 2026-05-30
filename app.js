@@ -233,7 +233,10 @@ const $ = (selector) => document.querySelector(selector);
 
 const el = {
   currentTypeGrid: $("#currentTypeGrid"),
-  currentTypeSelect: $("#currentTypeSelect"),
+  typePicker: $("#typePicker"),
+  currentTypeButton: $("#currentTypeButton"),
+  currentTypeLabel: $("#currentTypeLabel"),
+  currentTypeMenu: $("#currentTypeMenu"),
   targetGrid: $("#targetGrid"),
   targetPrev: $("#targetPrev"),
   targetNext: $("#targetNext"),
@@ -293,6 +296,11 @@ function bindEvents() {
   el.startBtn.addEventListener("click", startGame);
   el.menuBtn.addEventListener("click", () => showScreen("menu"));
   el.nextBtn.addEventListener("click", nextRound);
+  el.currentTypeButton.addEventListener("click", toggleTypeMenu);
+  document.addEventListener("click", closeTypeMenuFromOutside);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeTypeMenu();
+  });
   el.againBtn.addEventListener("click", () => {
     history.replaceState(null, "", location.href.split("#")[0]);
     renderMenu();
@@ -302,18 +310,13 @@ function bindEvents() {
 }
 
 function renderMenu() {
-  if (el.currentTypeSelect) {
-    el.currentTypeSelect.innerHTML = mbtiCast
-      .map((item, index) => `<option value="${index}">${item.mbti} · ${item.character}</option>`)
-      .join("");
-    el.currentTypeSelect.value = String(state.currentIndex);
-    el.currentTypeSelect.onchange = () => {
-      state.currentIndex = Number(el.currentTypeSelect.value);
-    };
-  }
+  normalizeTargetSelection();
+  renderCurrentTypePicker();
 
   const target = mbtiCast[state.targetIndex];
-  el.targetCounter.textContent = `${state.targetIndex + 1} / ${mbtiCast.length}`;
+  const targetEntries = getSelectableTargetEntries();
+  const targetOrder = targetEntries.findIndex((entry) => entry.index === state.targetIndex);
+  el.targetCounter.textContent = `${targetOrder + 1} / ${targetEntries.length}`;
   el.targetGrid.innerHTML = `
     <article class="target-card is-selected menu-hero-card">
       <span class="avatar atlas-avatar" style="${atlasStyle(target.portrait)}"></span>
@@ -326,13 +329,88 @@ function renderMenu() {
   `;
 
   el.targetPrev.onclick = () => {
-    state.targetIndex = (state.targetIndex - 1 + mbtiCast.length) % mbtiCast.length;
+    moveTarget(-1);
     renderMenu();
   };
   el.targetNext.onclick = () => {
-    state.targetIndex = (state.targetIndex + 1) % mbtiCast.length;
+    moveTarget(1);
     renderMenu();
   };
+}
+
+function getSelectableTargetEntries() {
+  return mbtiCast
+    .map((item, index) => ({ item, index }))
+    .filter((entry) => entry.index !== state.currentIndex);
+}
+
+function normalizeTargetSelection() {
+  if (state.targetIndex !== state.currentIndex) return;
+  for (let offset = 1; offset < mbtiCast.length; offset += 1) {
+    const nextIndex = (state.currentIndex + offset) % mbtiCast.length;
+    if (nextIndex !== state.currentIndex) {
+      state.targetIndex = nextIndex;
+      return;
+    }
+  }
+}
+
+function moveTarget(direction) {
+  const entries = getSelectableTargetEntries();
+  if (!entries.length) return;
+  const currentOrder = entries.findIndex((entry) => entry.index === state.targetIndex);
+  const safeOrder = currentOrder === -1 ? 0 : currentOrder;
+  const nextOrder = (safeOrder + direction + entries.length) % entries.length;
+  state.targetIndex = entries[nextOrder].index;
+}
+
+function renderCurrentTypePicker() {
+  const current = mbtiCast[state.currentIndex];
+  el.currentTypeLabel.innerHTML = `<span class="latin-token">${current.mbti}</span> · ${current.character}`;
+  el.currentTypeMenu.innerHTML = mbtiCast
+    .map(
+      (item, index) => `
+        <button
+          class="type-option ${index === state.currentIndex ? "is-selected" : ""}"
+          data-index="${index}"
+          role="option"
+          aria-selected="${index === state.currentIndex}"
+          type="button"
+        >
+          <span><b class="latin-token">${item.mbti}</b> · ${item.character}</span>
+          <small>${item.title}</small>
+        </button>
+      `,
+    )
+    .join("");
+  el.currentTypeMenu.querySelectorAll(".type-option").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.currentIndex = Number(button.dataset.index);
+      normalizeTargetSelection();
+      closeTypeMenu();
+      renderMenu();
+    });
+  });
+}
+
+function toggleTypeMenu(event) {
+  event.stopPropagation();
+  const nextOpen = el.currentTypeMenu.hidden;
+  el.currentTypeMenu.hidden = !nextOpen;
+  el.typePicker.classList.toggle("is-open", nextOpen);
+  el.currentTypeButton.setAttribute("aria-expanded", String(nextOpen));
+}
+
+function closeTypeMenu() {
+  if (!el.currentTypeMenu || el.currentTypeMenu.hidden) return;
+  el.currentTypeMenu.hidden = true;
+  el.typePicker.classList.remove("is-open");
+  el.currentTypeButton.setAttribute("aria-expanded", "false");
+}
+
+function closeTypeMenuFromOutside(event) {
+  if (!el.typePicker || el.typePicker.contains(event.target)) return;
+  closeTypeMenu();
 }
 
 function renderMenuTargetBrief(target) {
@@ -341,6 +419,7 @@ function renderMenuTargetBrief(target) {
 }
 
 function startGame() {
+  normalizeTargetSelection();
   state.roundIndex = 0;
   state.rounds = buildRounds();
   state.stats = { heart: 46, prestige: 42, clarity: 44 };
